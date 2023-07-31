@@ -8,7 +8,9 @@
 
 //------------------------------ Buzzer ---------------
 #define SAMPLE_CNT 32
-static const adc1_channel_t adc_channel = ADC_CHANNEL_4;
+static const adc_channel_t adc_channel ;
+//static const adc1_channel_t adc1_channel;
+static const adc2_channel_t adc2_channel = ADC2_CHANNEL_0;
 //#define LEDC_GPIO 27 //ESP32 Standard Buzzer is connected to this PIN
 //static const adc_channel_t adc_channel = ADC_CHANNEL_4;
 #define LEDC_GPIO 19 //ESP32-C3 Standard Buzzer is connected to this PIN
@@ -27,13 +29,16 @@ extern "C" void app_main(void)
 
    //2023-07-30 11:49:17 - prepare buzzer
    init_hw_c3();
+    esp_err_t ret;
+    int adc1_reading[3] = {0xcc};
+    int adc2_reading[1] = {0xcc};
    while (true)
    {
        uint32_t adc_val = 0;
        for (int i = 0; i < SAMPLE_CNT; ++i)
        {
-           adc_val += adc1_get_raw(adc_channel);
            //adc_val += adc2_get_raw(adc_channel);
+           adc_val += adc2_get_raw(adc2_channel , ADC_WIDTH_BIT_12, &adc2_reading[0]);
        }
        adc_val /= SAMPLE_CNT;
 
