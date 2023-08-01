@@ -20,10 +20,32 @@ static const char *TAG = "MyTask";
 
 
 TaskHandle_t mainTaskHandle ;
-// Fonction de la tâche
-void task(void *pvParameters)
+
+
+
+
+//2023-08-01 01:27:04 - Pattern buzzer
+typedef struct tone_pattern_t
 {
-      puts("hello breathing word");
+    int duty;
+    int repeat;
+    int on_MS;
+    int off_MS;
+    int freq;
+    tone_pattern_t():duty(100),repeat(3),on_MS(300),off_MS(300),freq(1000){}
+}tone_pattern_t;
+
+
+// buzzer tone task
+void buzzer_tone(void *pvParameters)
+{
+    puts("hello breathing word");
+    tone_pattern_t tone_pattern; //default constructor values
+    if( pvParameters != NULL)
+    {
+        tone_pattern = *(   (tone_pattern_t*) pvParameters );
+    }
+
 
     ledc_timer_config_t ledc_timer;
     memset(&ledc_timer, 0, sizeof(ledc_timer));
@@ -47,32 +69,33 @@ void task(void *pvParameters)
     ledc_timer_config(&ledc_timer);
     ledc_channel_config(&ledc_channel);
 
-    int duty=1023;
-    duty = 100;
-    int nTime = 2;
-    for(int i=0; i<nTime; i++)
+    for(int i=0; i<tone_pattern.repeat; i++)
     {
            // Turn on buzzer
-           puts("LED ON\n");
-            ledc_set_duty(LEDC_LOW_SPEED_MODE, LED_CHANNEL, duty);
+           puts("BUZ ON\n");
+            ledc_set_duty(LEDC_LOW_SPEED_MODE, LED_CHANNEL, tone_pattern.duty);
             ledc_update_duty(LEDC_LOW_SPEED_MODE, LED_CHANNEL);
-            vTaskDelay(ON_DELAY / portTICK_PERIOD_MS);
+            vTaskDelay(tone_pattern.on_MS / portTICK_PERIOD_MS);
 
             //2023-07-30 22:23:48 - Turn off buzzer, duty = 0
-            puts("LED OFF\n");
+            puts("BUZ OFF\n");
             ledc_set_duty(LEDC_LOW_SPEED_MODE, LED_CHANNEL, 0);
             ledc_update_duty(LEDC_LOW_SPEED_MODE, LED_CHANNEL);
-            vTaskDelay(OFF_DELAY / portTICK_PERIOD_MS);
+            vTaskDelay(tone_pattern.off_MS / portTICK_PERIOD_MS);
     }
 
 
     // Supprimer la tâche
     vTaskDelete(NULL);
     //Faut rien mettre après ici, ce ne sera pas exécuté
-}
+}//buzzer_tone task
 
 
-
+//2023-08-01 01:43:57 - Quickly start tone task
+void tone_buzzer(tone_pattern_t tone_pattern)
+{
+        xTaskCreate(buzzer_tone, "buzzer_tone", 2048, (void *)&tone_pattern, 5, NULL);
+}//tone_buzzer
 
 extern "C" void app_main(void) {
         // Initialize logging
@@ -80,17 +103,21 @@ extern "C" void app_main(void) {
         mainTaskHandle = xTaskGetCurrentTaskHandle();
         // Créer la tâche
         puts("waiting");
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-        xTaskCreate(task, "myTask", 2048, NULL, 5, NULL);
-        //xTaskCreate(mainJob, "mainJob", 2048, NULL, 5, &jobHandle);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
 
-        xTaskCreate(task, "myTask", 2048, NULL, 5, NULL);
+        tone_pattern_t tone_pattern;
+        tone_pattern.on_MS = 1000;
+        tone_pattern.off_MS = 300;
+        tone_buzzer(tone_pattern);
 
-          vTaskDelay(11000 / portTICK_PERIOD_MS);
+        vTaskDelay(4000 / portTICK_PERIOD_MS);
 
-        xTaskCreate(task, "myTask", 2048, NULL, 5, NULL);
+        tone_pattern_t tone_pattern_flash ;
+        tone_pattern_flash.on_MS = 200;
+        tone_pattern_flash.off_MS = 200;
+        tone_pattern_flash.repeat = 6;
+        tone_buzzer(tone_pattern_flash);
 
         // Attendre la fin de la tâche
         puts("Wait for job task to finish\n");
