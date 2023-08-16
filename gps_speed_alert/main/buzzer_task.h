@@ -54,8 +54,6 @@
 TaskHandle_t mainTaskHandle ;
 
 
-
-
 //2023-08-01 01:27:04 - Pattern buzzer
 typedef struct tone_pattern_t
 {
