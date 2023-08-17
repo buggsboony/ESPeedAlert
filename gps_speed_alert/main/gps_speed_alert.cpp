@@ -7,7 +7,7 @@
 #include "driver/ledc.h"
 
 
-//#include "esp_h/esp_iotools.h" //2023-08-16 17:25:12 - to use functions : replaceStr()
+#include "esp_h/esp_iotools.h" //2023-08-16 17:25:12 - to use functions : replaceStr()
 
 //2023-08-15 10:52:30 - Log Tag
 static const char *TAG = "ESPeedApp";

@@ -224,15 +224,17 @@ esp_err_t get_handler(httpd_req_t *req)
         httpd_resp_set_hdr(req, "Content-Encoding", "identity");
     }
 
-    // map <string,string> server_side_vars;
-    // server_side_vars["{{TITLE}}"] = "ESPeed Web Server HTTP";
-    // server_side_vars["{{POST_URI}}"] = serverIP + "/config";
+    map <string,string> server_side_vars;
+    server_side_vars["{{TITLE}}"] = "ESPeed Web Server HTTP";
+    server_side_vars["{{POST_URI}}"] = "/config";// full uri not working : "/"+serverIP + "/config"
+    //server_side_vars["{{DATETIME}}"] = "ESPeed Web Server HTTP"; cant find date time for esp32 
+    server_side_vars["{{JSON_CONFIG}}"] = "Config JSON ici";     //2023-08-17 17:14:49 - Json_config
     
-    // //2023-08-16 17:16:44 - Browse map to replace variable with there content :
-    // for( auto m:server_side_vars)
-    // {
-    //   //replaceStr(HTML_CONTENT, m.first, m.second);
-    // }//next
+    //2023-08-16 17:16:44 - Browse map to replace variable with there content :
+    for( auto m:server_side_vars)
+    {
+      replaceStr(HTML_CONTENT, m.first, m.second);
+    }//next
 
     //ESPeed Web Server HTTP   
     httpd_resp_send(req, HTML_CONTENT.c_str(), HTTPD_RESP_USE_STRLEN);
