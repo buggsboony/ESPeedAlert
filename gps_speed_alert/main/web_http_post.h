@@ -51,6 +51,7 @@ Don't use #include <iostream>  # It gives error Failed.. partition table ...
 
 
 #include <stdio.h>
+#include <map>
 #include <string.h>
 #include <stdlib.h>
 
@@ -105,7 +106,7 @@ string serverIP = "192.168.4.1";
 
 
 
-
+#include "html_content.h" //2023-08-16 16:59:12 - File HTML
 
 
 
@@ -223,15 +224,18 @@ esp_err_t get_handler(httpd_req_t *req)
         httpd_resp_set_hdr(req, "Content-Encoding", "identity");
     }
 
-    const char header[] = "<!doctype html><html><head><title>Serveur HTTP ESP32</title></head><body>get_handler<form action=\"http://";
-    const char footer[] = "/config\" method=\"post\"><label for=\"mytext\">Contenu :</label><textarea id=\"mytext\" name=\"mytext\">text content</textarea> <br/><button>Envoyer POST</button></form></body></html>";
-    char response[512] = "";
-    strcat(response, header);
-    strcat(response, serverIP.c_str() );
-    //strcat(response, "192.168.4.1" );
-    strcat(response, footer);
+    // map <string,string> server_side_vars;
+    // server_side_vars["{{TITLE}}"] = "ESPeed Web Server HTTP";
+    // server_side_vars["{{POST_URI}}"] = serverIP + "/config";
+    
+    // //2023-08-16 17:16:44 - Browse map to replace variable with there content :
+    // for( auto m:server_side_vars)
+    // {
+    //   //replaceStr(HTML_CONTENT, m.first, m.second);
+    // }//next
 
-    httpd_resp_send(req, response, HTTPD_RESP_USE_STRLEN);
+    //ESPeed Web Server HTTP   
+    httpd_resp_send(req, HTML_CONTENT.c_str(), HTTPD_RESP_USE_STRLEN);
 
     return ESP_OK;
 }
