@@ -229,7 +229,7 @@ esp_err_t get_handler(httpd_req_t *req)
     server_side_vars["{{POST_URI}}"] = "/config";// full uri not working : "/"+serverIP + "/config"
     //server_side_vars["{{DATETIME}}"] = "ESPeed Web Server HTTP"; cant find date time for esp32 
     server_side_vars["{{JSON_CONFIG}}"] = "Config JSON ici";     //2023-08-17 17:14:49 - Json_config
-
+    
     //2023-08-16 17:16:44 - Browse map to replace variable with there content :
     for( auto m:server_side_vars)
     {
@@ -377,29 +377,23 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 }//wifi_event_handler
 
 
-//2023-08-17 20:01:04 - Entry point for Wifi 
 void wifi_init_softap(void)
 {
-  //  ESP_LOGI(TAG, "esp_netif_init");
    ESP_ERROR_CHECK(esp_netif_init());
-   // ESP_LOGI(TAG, "esp_event_loop_create_default");
    ESP_ERROR_CHECK(esp_event_loop_create_default());
-   // ESP_LOGI(TAG, "esp_netif_create_default_wifi_ap");
    esp_netif_create_default_wifi_ap();
 
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-     ESP_LOGI(TAG, "WIFI_INIT_CONFIG_DEFAULT");
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+   wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+   ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-    ESP_LOGI(TAG, "esp_event_handler_instance_register");
+
    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
                                                        ESP_EVENT_ANY_ID,
                                                        &wifi_event_handler,
                                                        NULL,
                                                        NULL));
 
-    ESP_LOGI(TAG, "memset wifi_config_t");
 
    wifi_config_t wifi_config;
    memset(&wifi_config,0,sizeof(wifi_config_t) );
@@ -416,23 +410,15 @@ void wifi_init_softap(void)
        wifi_config.ap.authmode = WIFI_AUTH_OPEN;
    }
 
-    ESP_LOGI(TAG, "esp_wifi_set_mode");
-   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
-    
-    ESP_LOGI(TAG, "esp_wifi_set_config");
-   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
-    ESP_LOGI(TAG, "esp_wifi_start");
 
+   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_AP));
+   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &wifi_config));
    ESP_ERROR_CHECK(esp_wifi_start());
+
 
    ESP_LOGI(TAG, "wifi_init_softap finished. SSID:%s password:%s channel:%d",
             EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS, EXAMPLE_ESP_WIFI_CHANNEL);
 }//wifi_init_softap
-
-
-
-
-
 
 //2023-08-16 11:38:09 - Usage
 void wifi_http_server(void)

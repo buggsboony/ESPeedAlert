@@ -51,8 +51,6 @@
 #define OFF_DELAY 300
 
 
-TaskHandle_t mainTaskHandle ;
-
 
 //2023-08-01 01:27:04 - Pattern buzzer
 typedef struct tone_pattern_t
@@ -124,6 +122,6 @@ void buzzer_tone(void *pvParameters)
 //2023-08-01 01:43:57 - Quickly start tone task
 void tone_buzzer(tone_pattern_t tone_pattern)
 {
-        xTaskCreate(buzzer_tone, "buzzer_tone", 2048, (void *)&tone_pattern, 5, NULL);
+    xTaskCreate(buzzer_tone, "buzzer_tone", 2048, (void *)&tone_pattern, 5, NULL);
 }//tone_buzzer
 
