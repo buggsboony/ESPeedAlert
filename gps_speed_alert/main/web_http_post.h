@@ -380,7 +380,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
 //2023-08-17 20:01:04 - Entry point for Wifi 
 void wifi_init_softap(void)
 {
-  //  ESP_LOGI(TAG, "esp_netif_init");
+    ESP_LOGI(TAG, "wifi_init_softap(), esp_netif_init");
    ESP_ERROR_CHECK(esp_netif_init());
    // ESP_LOGI(TAG, "esp_event_loop_create_default");
    ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -389,7 +389,7 @@ void wifi_init_softap(void)
 
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-     ESP_LOGI(TAG, "WIFI_INIT_CONFIG_DEFAULT");
+    ESP_LOGI(TAG, "WIFI_INIT_CONFIG_DEFAULT");
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
     ESP_LOGI(TAG, "esp_event_handler_instance_register");
