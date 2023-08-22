@@ -190,9 +190,33 @@ void initStuff()
 
 }//init
 
+
+
+
+
+
+
 extern "C" void app_main(void)
 {
     initStuff();
+
+
+
+      configTask(NULL); //Force config task for tests
+      return;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     // //ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
@@ -229,3 +253,8 @@ extern "C" void app_main(void)
 
     cout<<" END PROGRAM "<<endl;
 }
+
+
+
+
+ 

@@ -225,7 +225,7 @@ esp_err_t get_handler(httpd_req_t *req)
     }
 
     map <string,string> server_side_vars;
-    server_side_vars["{{TITLE}}"] = "ESPeed Web Server HTTP";
+    server_side_vars["{{TITLE}}"] = "ESPeed Web Server HTTP <em class=\"info\">(click here to load example)</em>";
     server_side_vars["{{POST_URI}}"] = "/config";// full uri not working : "/"+serverIP + "/config"
     //server_side_vars["{{DATETIME}}"] = "ESPeed Web Server HTTP"; cant find date time for esp32 
     server_side_vars["{{JSON_CONFIG}}"] = "Config JSON ici";     //2023-08-17 17:14:49 - Json_config
@@ -264,13 +264,25 @@ esp_err_t post_handler(httpd_req_t *req)
 
         return ESP_FAIL;
     }
+
     ESP_LOGI(TAG, "Contenu POST : [%s]", content);
 
     // envoie une réponse
     //const char resp[] = "Test Reponse POST OK";
     string decodedStr = urldecode(content);
-string sResp = "Réponse post du serv ESP32: "+decodedStr;
+    string sResp = "Réponse post du serv ESP32: "+decodedStr;
     httpd_resp_send(req, sResp.c_str() , HTTPD_RESP_USE_STRLEN);
+
+// //2023-08-21 20:32:31 - Response Example, when post from XHTTP request
+// ------WebKitFormBoundaryV3AGE0d6Us3yo3hA
+// Content-Disposition: form-data; name="command"
+// Content-Stuff: some line stuff
+
+// CONTENT-HERE
+// ------WebKitFormBoundaryV3AGE0d6Us3yo3hA--
+
+
+
 
     return ESP_OK;
 }//post_handler
