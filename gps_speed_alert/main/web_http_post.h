@@ -201,8 +201,94 @@ string urlencode(string str)
 
 
 
+/********************* Parsing Stuff ***************************/
+
+// 2023-08-25 19:46:27 - Parse content header
+map<string, string> readContentHeaders(string contents_var)
+{
+   map<string, string> htable;
+   vector<string> lines = explode(contents_var, '\n');
+   for (string line : lines)
+   {
+       // cout<<"readContentHead line=["<<line<<"]"<<endl;
+       vector<string> value_pair = explode(line, ':');
+       if (value_pair.size() >= 2)
+       {
+           htable[value_pair[0]] = value_pair[1];
+           //cout << value_pair[0] << "=>" << value_pair[1] << endl;
+       }
+       else
+       {
+           // content-header malformed ?
+       }
+   } // next
+   return htable;
+} // readContentHeaders
 
 
+//2023-08-30 13:08:25 - readFormData (XHTTP POST Request Chrome)
+//2023-08-30 13:59:24 - CRLF for ESP32-c3
+map<string, string> readFormData(string webkitBoundaryStr)
+{
+   map<string, string> htable;
+   // Identifier la position du premier "\n\n" => pos_2LN
+   size_t pos_LN = webkitBoundaryStr.find("\r\n");
+   size_t pos_3LN = webkitBoundaryStr.find("\r\n\r\n");
+   if(pos_3LN == string::npos)
+   {
+       cout<<endl<<"\n\nAouch, pos_3LN was not found !"<<endl;
+
+       size_t pos_3LN = webkitBoundaryStr.find("data");   
+    if(pos_3LN == string::npos)
+    {
+        cout<<endl<<"\n\nAouch, pos_3LN data was not found !"<<endl;
+    }else cout <<"Aouch data found"<<endl;
+   }
+    
+  //  cout << "pos_LN CRLF=" << pos_LN << endl;
+  //  cout << "pos_3LN=" << pos_3LN << endl;
+
+   // Récupérer la première ligne (l'identification)
+   string post_identifier = webkitBoundaryStr.substr(0, pos_LN);
+   //cout << "post_identifier=[" << post_identifier << "]" << endl;
+   // int pos_identifier = webkitBoundaryStr.find(post_identifier);
+   // cout<<"pos_identifier=["<<pos_identifier<<"]"<<endl;
+
+   // post_identifier = "------WebKitFormBoundaryV3AGE0d6Us3yo3hA"
+   // identifier la pos. du post_identifier_end = "------WebKitFormBoundaryV3AGE0d6Us3yo3hA--" => pos_ident_end
+   int pos_identifier_end = webkitBoundaryStr.rfind(post_identifier); //use rfind instead of find_last_of adds length to the position, this is not reliable  
+   //cout << "pos_identifier_end=[" << pos_identifier_end << "]" << endl;
+   // - Parser chaque ligne de content-xxxx présente, et récupérer name="command"
+   // string content_vars = webkitBoundaryStr.substr( post_identifier.length(), );
+   int from = post_identifier.length() + 1; //+1 => + "\n"
+   string content_vars = webkitBoundaryStr.substr(from, pos_3LN - from);
+   //cout << "content_vars=[" << content_vars << "]" << endl;
+   // 2023-08-25 19:53:48 Parse content headers
+   map<string, string> headers = readContentHeaders(content_vars);
+   htable["Content-Disposition"] = "";
+   if (headers.count("Content-Disposition"))
+   {
+       cout<<"Content Disposition Found !!"<<endl;
+       htable["Content-Disposition"] = headers["Content-Disposition"];
+       //Rechercher la commande "command"
+      //  if( headers["Content-Disposition"].find("name=\"command\"") != string::npos )
+      //  {
+      //     cout<<"command name OK"<<endl;
+      //  }else
+      //  {
+      //     cout<<"Command name not OK"<<endl;
+      //  }
+   }
+   else
+   {
+       cout << "Oups, no Content-Disposition !?" << endl;
+   }
+   from = pos_3LN+3; //\n\n length
+   string post_content =  webkitBoundaryStr.substr(from, pos_identifier_end - from -1); //-1 to remove the last \n
+   //cout<<"PAYLOAD["<<post_content<<"]"<<endl;
+   htable["content"] = post_content;   
+   return htable;
+} // readFormData
 
 
 /******************  WEBSEVER CODE BEGINS ***********************/
@@ -240,7 +326,7 @@ esp_err_t get_handler(httpd_req_t *req)
     httpd_resp_send(req, HTML_CONTENT.c_str(), HTTPD_RESP_USE_STRLEN);
 
     return ESP_OK;
-}
+}//get_handler
 
 // Gestionnaire d'URI pour une requête POST /test
 esp_err_t post_handler(httpd_req_t *req)
@@ -265,7 +351,7 @@ esp_err_t post_handler(httpd_req_t *req)
         return ESP_FAIL;
     }
 
-    ESP_LOGI(TAG, "Contenu POST : [%s]", content);
+    //ESP_LOGI(TAG, "Contenu POST : [%s]", content);
 
     // envoie une réponse
     //const char resp[] = "Test Reponse POST OK";
@@ -273,16 +359,32 @@ esp_err_t post_handler(httpd_req_t *req)
     string sResp = "Réponse post du serv ESP32: "+decodedStr;
     httpd_resp_send(req, sResp.c_str() , HTTPD_RESP_USE_STRLEN);
 
-// //2023-08-21 20:32:31 - Response Example, when post from XHTTP request
-// ------WebKitFormBoundaryV3AGE0d6Us3yo3hA
-// Content-Disposition: form-data; name="command"
-// Content-Stuff: some line stuff
+    // //2023-08-21 20:32:31 - Response Example, when post from XHTTP request
+    // ------WebKitFormBoundaryV3AGE0d6Us3yo3hA
+    // Content-Disposition: form-data; name="command"
+    // Content-Stuff: some line stuff
 
-// CONTENT-HERE
-// ------WebKitFormBoundaryV3AGE0d6Us3yo3hA--
+    // CONTENT-HERE
+    // ------WebKitFormBoundaryV3AGE0d6Us3yo3hA--
 
+    map<string,string> htable = readFormData(decodedStr);
 
-
+    //Analyze sent command
+    if( htable["Content-Disposition"].find("name=\"data\"") != string::npos )
+    {
+      cout<<"Command DATA OK"<<endl;
+      //Save config to EPROM nvs
+    }//data
+    
+    if( htable["Content-Disposition"].find("name=\"restart\"") != string::npos )
+    {
+      cout<<"Command restart OK"<<endl;
+      ESP_LOGI(TAG, "esp_restart() !! [%s]", htable["content"].c_str() );
+      esp_restart();
+    }//restart
+    
+    //ESP_LOGI(TAG, "htable[content] POSTed : [%s]", htable["content"].c_str() ); //Give a stack overflow error
+    //cout<<"htable content:"<< htable["content"]<<endl;
 
     return ESP_OK;
 }//post_handler

@@ -195,7 +195,7 @@ void initStuff()
 
 
 
-
+//Main app, entry point.
 extern "C" void app_main(void)
 {
     initStuff();

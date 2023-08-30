@@ -116,11 +116,12 @@ string HTML_CONTENT = R"(
 
     <script>
 
+         
            //2023-08-17 16:58:26 - Send command to server
-        function sendCommand(command, value)
+        function sendCommand(command_name, value)
         {
                 var url = "/config";                
-                var payload =value;
+                var payload = value;
                 //2023-08-17 18:26:22 - response callback
                 var onResponse= function(data)
                 {
@@ -129,7 +130,7 @@ string HTML_CONTENT = R"(
                     console.log(data);                    
                 }      
                 var postData = new FormData();	
-                postData.append('command', payload);
+                postData.append(command_name, payload);
                 var xhttp = new XMLHttpRequest();
                 xhttp.onreadystatechange = function() {
                     if (this.readyState == 4 && this.status == 200) {
@@ -148,12 +149,12 @@ string HTML_CONTENT = R"(
         }//saveConfig
 
 
-
+        //2023-08-30 15:22:29 - Restart command, data is local date time
         function restart()
         {           
                 var area = document.getElementById("postdata");
                 var when = new Date();                
-                sendCommand("restart",when.toISOString().substring(0,10) );
+                sendCommand("restart",when.toISOString().substring(0,10)+" "+when.toLocaleTimeString() );                
         }//saveConfig
 
 
