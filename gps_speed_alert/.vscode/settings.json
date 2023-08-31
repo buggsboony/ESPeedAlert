@@ -5,7 +5,9 @@
 "files.associations": {
     "sstream": "cpp",
     "ostream": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "string": "cpp",
+    "format": "cpp"
 }
 
 }

@@ -314,7 +314,7 @@ esp_err_t get_handler(httpd_req_t *req)
     server_side_vars["{{TITLE}}"] = "ESPeed Web Server HTTP <em class=\"info\">(click here to load example)</em>";
     server_side_vars["{{POST_URI}}"] = "/config";// full uri not working : "/"+serverIP + "/config"
     //server_side_vars["{{DATETIME}}"] = "ESPeed Web Server HTTP"; cant find date time for esp32 
-    server_side_vars["{{JSON_CONFIG}}"] = "Config JSON ici";     //2023-08-17 17:14:49 - Json_config
+    server_side_vars["{{JSON_CONFIG}}"] = nvs_read_string(nvsHandle,"JSON_CONFIG","JSON config goes Here");     //2023-08-17 17:14:49 - Json_config
 
     //2023-08-16 17:16:44 - Browse map to replace variable with there content :
     for( auto m:server_side_vars)
@@ -372,8 +372,11 @@ esp_err_t post_handler(httpd_req_t *req)
     //Analyze sent command
     if( htable["Content-Disposition"].find("name=\"data\"") != string::npos )
     {
-      cout<<"Command DATA OK"<<endl;
+      cout<<"Command DATA OK"<<endl;      
       //Save config to EPROM nvs
+
+       nvs_write_string(nvsHandle,"JSON_CONFIG",htable["content"]);
+       
     }//data
     
     if( htable["Content-Disposition"].find("name=\"restart\"") != string::npos )

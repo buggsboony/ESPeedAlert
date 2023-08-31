@@ -17,6 +17,11 @@ static const char *TAG = "ESPeedApp";
 #include "esp_tools.h" // nvs + led strip 
 //------------------------------ nvs in esp_tools ------------------
 
+//----------------- Task Stuff for double_reset
+TaskHandle_t mainTaskHandle;
+nvs_handle_t nvsHandle;
+TickType_t tickCount;
+
 //------------------------------ Buzzer ---------------
 #include "buzzer_task.h"
 //------------------------------ Buzzer ------------------
@@ -25,10 +30,6 @@ static const char *TAG = "ESPeedApp";
 #include "web_http_post.h"
 //------------------------------ Wifi & HTTP ------------------
 
-//----------------- Task Stuff for double_reset
-TaskHandle_t mainTaskHandle;
-nvs_handle_t nvsHandle;
-TickType_t tickCount;
 //----------------------------------- /LED Stuff
 static led_strip_handle_t led_strip;
 static uint8_t s_led_state = 0;
