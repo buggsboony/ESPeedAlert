@@ -3,8 +3,11 @@
 #define CONFIG_FREERTOS_ENABLE_BACKWARD_COMPATIBILITY 1
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_log.h"
+//#include "esp_chip_info.h"
 #include "driver/adc.h"
 #include "driver/ledc.h"
+#include "cJSON.h"
 
 
 #include "esp_h/esp_iotools.h" //2023-08-16 17:25:12 - to use functions : replaceStr()
@@ -30,6 +33,12 @@ TickType_t tickCount;
 #include "web_http_post.h"
 //------------------------------ Wifi & HTTP ------------------
 
+
+//----------------- JSON Stuffs --------------
+#include "json_config.h"
+//------------
+
+
 //----------------------------------- /LED Stuff
 static led_strip_handle_t led_strip;
 static uint8_t s_led_state = 0;
@@ -54,9 +63,7 @@ void task(void *pvParameters)
     vTaskDelete(NULL);
    //Faut rien mettre après ici, ce ne sera pas exécuté
 }
-
-
-//2023-07-12 19:37:40
+//2023-07-12 19:37:40 - jobTask
 TaskHandle_t jobHandle;
 void mainJob(void *pvParameters)//*******************************************  main Job Task
 {
@@ -84,13 +91,12 @@ void mainJob(void *pvParameters)//*******************************************  m
     ESP_LOG_LEVEL(ESP_LOG_WARN, TAG, "%d - LED IS OFF", s_led_state);
     vTaskDelay(5*1000/portTICK_PERIOD_MS);
 
+    //Get JSON Config : 
+    readJsonConfig();
 
-    for(int i=0; i<20; i++)
-    {
-        ESP_LOGI(TAG,">%d",i);
-        // Simuler un travail
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
+
+
+
     // Fin de la tâche
     ESP_LOGI(TAG,"Job ended.\n");
 
@@ -203,7 +209,8 @@ extern "C" void app_main(void)
 
 
 
-      configTask(NULL); //Force config task for tests
+      //configTask(NULL); //Force config task manually for tests
+       mainJob(NULL); //Go jobTask()
       return;
 
 

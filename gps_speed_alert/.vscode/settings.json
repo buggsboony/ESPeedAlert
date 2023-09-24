@@ -7,7 +7,12 @@
     "ostream": "cpp",
     "iostream": "cpp",
     "string": "cpp",
-    "format": "cpp"
+    "format": "cpp",
+    "array": "cpp",
+    "any": "cpp",
+    "chrono": "cpp",
+    "typeindex": "cpp",
+    "typeinfo": "cpp"
 }
 
 }
