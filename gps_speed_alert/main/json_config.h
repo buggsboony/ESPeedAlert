@@ -11,10 +11,56 @@
 typedef struct JTone
 {    
     string name;
+    bool isValid;
     int freq;
     bool enable;
-    JTone():name("JTone untitled"),freq(555),enable(true){}        
+    JTone():name("JTone untitled"),freq(555),enable(true),isValid(true){}        
 }JTone;
+
+//Point
+typedef struct JPoint
+{
+    double X,Y;
+    bool isValid;
+    JPoint():X(0),Y(0),isValid(true)    
+}JPoint;    
+
+//2023-09-24 18:03:32 - Polygon is made of multiple points
+typedef struct JPolygon
+{
+    vector<JPoint>points;
+    bool isValid;
+    JPolygon():isValid(false),X(0),Y(0)
+
+}JPolygon;
+
+typedef struct JSector
+{
+    string name; //Sector name
+    JPolygon polygon;
+}JSector;
+
+
+typedef struct JArea
+{
+    string name; //Area name
+    string sectorName; //Sector name if any
+    JSector sector;
+    JPolygon polygon;
+    JTone enter_tone,exit_tone; //Overload tones behaviours.
+}JArea;
+
+
+
+typedef struct JConfig
+{
+    JTone enter_tone,exit_tone;
+    vector<JSector> sectors;
+    vector<JArea> areas;
+    double alt_prec;
+    JConfig():alt_prec(4){}             
+}JConfig;
+
 
 
 //2023-08-31 17:55:24 - Readable json type
@@ -34,20 +80,232 @@ string JSON_Types(int type) {
 }
 
 
-double jsonReadDouble(bool & success)
+
+// void JSON_Analyze(const cJSON * const root) {
+// 	//ESP_LOGI(TAG, "root->type=%s", JSON_Types(root->type));
+// 	cJSON *current_element = NULL;
+// 	//ESP_LOGI(TAG, "roo->child=%p", root->child);
+// 	//ESP_LOGI(TAG, "roo->next =%p", root->next);
+// 	cJSON_ArrayForEach(current_element, root) {
+// 		//ESP_LOGI(TAG, "type=%s", JSON_Types(current_element->type));
+// 		//ESP_LOGI(TAG, "current_element->string=%p", current_element->string);
+// 		if (current_element->string) {
+// 			const char* string = current_element->string;
+// 			ESP_LOGI(TAG, "[%s]", string);
+// 		}
+// 		if (cJSON_IsInvalid(current_element)) {
+// 			ESP_LOGI(TAG, "Invalid");
+// 		} else if (cJSON_IsFalse(current_element)) {
+// 			ESP_LOGI(TAG, "False");
+// 		} else if (cJSON_IsTrue(current_element)) {
+// 			ESP_LOGI(TAG, "True");
+// 		} else if (cJSON_IsNull(current_element)) {
+// 			ESP_LOGI(TAG, "Null");
+// 		} else if (cJSON_IsNumber(current_element)) {
+// 			int valueint = current_element->valueint;
+// 			double valuedouble = current_element->valuedouble;
+// 			ESP_LOGI(TAG, "int=%d double=%f", valueint, valuedouble);
+// 		} else if (cJSON_IsString(current_element)) {
+// 			const char* valuestring = current_element->valuestring;
+// 			ESP_LOGI(TAG, "%s", valuestring);
+// 		} else if (cJSON_IsArray(current_element)) {
+// 			//ESP_LOGI(TAG, "Array");
+// 			JSON_Analyze(current_element);
+// 		} else if (cJSON_IsObject(current_element)) {
+// 			//ESP_LOGI(TAG, "Object");
+// 			JSON_Analyze(current_element);
+// 		} else if (cJSON_IsRaw(current_element)) {
+// 			ESP_LOGI(TAG, "Raw(Not support)");
+// 		}
+// 	}
+// }
+
+
+//2023-09-24 17:18:54 - PArse some json element
+string jsonReadString( cJSON * obj , string key, bool & success)
 {
-    double typedRes;
+    string typedRes= -1;
     success = false;
-    cJSON * res = cJSON_GetObjectItem(obj,"freq");
-    
-    if (res){
-     typedRes = res->valuedouble;
+    cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
+    if(res)
+    {
+        typedRes = res->valuestring;
+        success = true;
+    }
+    return typedRes;
+}//jsonReadString
+
+
+
+
+//2023-09-24 17:18:54 - PArse some json element
+double jsonReadDouble( cJSON * obj , string key, bool & success)
+{
+    double typedRes= -1;
+    success = false;
+    cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
+    if(res)
+    {
+        if (cJSON_IsNumber(res)) {
+          typedRes = res->valuedouble;
+          success = true;      
+        }        
     }
     return typedRes;
 }//JsonReadDouble
+
+
+
+//2023-09-24 17:18:54 - PArse some json element
+bool jsonReadBoolean(cJSON * obj ,string key, bool & success)
+{  
+    success = false;
+    cJSON * res = cJSON_GetObjectItem(obj, key.c_str() );  
+    if(res)
+    {
+        success = true;
+        if ( cJSON_IsTrue(res) == 1) 
+        {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}//jsonReadBoolean
+
+
+
+
+//2023-09-24 17:18:54 - PArse some json element jsonReadPoint
+JPolygon jsonReadPoint( cJSON * obj , string key, bool & success)
+{
+ 
+    //                         [
+    //                             4.6323036,
+    //                             -1.00874
+    //                         ] 
+    success = false;
+    JPoint jpoint;
+    cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
+    if(res)
+    {
+        double X, Y;
+        short c=0;
+        cJSON_ArrayForEach(res, obj) 
+        {
+            succeeded=true;
+            double d = jsonReadDouble(res,succeeded);
+            if (cJSON_IsNumber(res)) {
+                
+                if(c==0)
+                {
+                    X = d;
+                }
+                if(c==1)
+                {
+                    Y = d;
+                }
+                //ESP_LOGI(TAG, "int=%d double=%f", valueint, valuedouble);                
+            }else
+            {
+                //ERror  !
+            }
+          c++;
+        }//loop array   
+        jpoint.X = X; jpoint.Y=Y;            
+    }
+    return jpoint;
+}//jsonReadPoint
+
+//2023-09-24 17:18:54 - PArse some json element
+JPolygon jsonReadPolygon( cJSON * obj , string key, bool & success)
+{
+    // [
+    //                         [
+    //                             4.6323036,
+    //                             -1.00874
+    //                         ],
+    //                         [
+    //                             4.63306036,
+    //                             -1.008
+    //                         ],
+    //                         [
+    //                             4.63339823,
+    //                             -1
+    //                         ],
+    //                         [
+    //                             4.6351853,
+    //                             -1.0091
+    //                         ]
+    //                     ]    
+    success = false;
+    JPolygon polygon;
+    cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
+    if(res)
+    {
+        cJSON_ArrayForEach(res, obj) 
+        {
+            succeeded=true;
+            JPoint point = jsonReadPoint(res,succeeded);
+            //if(succeeded)
+            {
+                polygon.points.push_back(point);
+            }
+        }//loop array   
+    }
+    return polygon;
+}//jsonReadPolygon
+
+
+//2023-09-24 17:18:54 - PArse some json element
+Sector jsonReadSector(cJSON * obj, bool & success)
+{  
+    // {
+    //                     "name": "north",
+    //                     "polygon": [
+    //                         [
+    //                             4.6323036,
+    //                             -1.00874
+    //                         ],
+    //                         [
+    //                             4.63306036,
+    //                             -1.008
+    //                         ],
+    //                         [
+    //                             4.63339823,
+    //                             -1
+    //                         ],
+    //                         [
+    //                             4.6351853,
+    //                             -1.0091
+    //                         ]
+    //                     ]
+    //                 }
+    Sector sector;
+    success = false;
+ 
+    if (cJSON_IsObject(obj)) {
+        //ESP_LOGI(TAG, "Object");
+        bool succeeded = false;
+        sector.name = jsonReadString(obj, "name",succeeded);        
+             ESP_LOGI(TAG, "sector name is %s", sector.name);
+
+        sector.polygon = jsonReadPolygon(obj,"polygon");
+        success=true;
+    } 
+    
+    return sector;    
+}//jsonReadSector
+
+
 //2023-09-24 13:47:07 - Convert JSon object to object
 void * convertJsonObject(cJSON * obj , string code_name)
 {
+    bool succeeded = false;
+    double d;
+    bool b;
+    cJSON *current_element = NULL;
+
     void * out = NULL;
     if( !obj ) return out;
     //Parse tone object
@@ -62,20 +320,31 @@ void * convertJsonObject(cJSON * obj , string code_name)
         
         JTone * tone = new JTone();
 
-        double d = jsonReadDouble(succeed);
-            // double lng = cJSON_GetObjectItem(root,"lng")->valuedouble;
+        d = jsonReadDouble(obj, "freq",succeeded);        
+        if(succeeded) { tone.freq = d; } else tone.isValid = false; 
 
+        b = jsonReadBoolean(obj, "enable",succeeded);        
+        if(succeeded) { tone.enable = b; } else tone.isValid = false; 
+    
         out = (void*) tone;
-    }
+    }//endif "TONE"
   
     if(code_name=="alt_prec")
     {
         //Single Double   
+         d = jsonReadDouble(obj, "freq",succeeded);        
+        if(succeeded) { alt_prec = d; }
     }
     
     if(code_name=="sectors")
     {
-        //Tableau de sector contenant "name" et "polygon"
+        ESP_LOGI(TAG, "--SECTORS--");
+        //containing an array of sectors
+        cJSON_ArrayForEach(current_element, obj) 
+        {
+            Sector sector = jsonReadSector(current_element,succeeded);
+            sectors.push_back(sector);
+        }//loop array
     }
     
     if(code_name=="polygon")
