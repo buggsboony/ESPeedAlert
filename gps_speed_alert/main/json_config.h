@@ -11,9 +11,9 @@
 typedef struct JTone
 {    
     string name;
-    bool isValid;
     int freq;
     bool enable;
+    bool isValid;
     JTone():name("JTone untitled"),freq(555),enable(true),isValid(true){}        
 }JTone;
 
@@ -22,7 +22,7 @@ typedef struct JPoint
 {
     double X,Y;
     bool isValid;
-    JPoint():X(0),Y(0),isValid(true)    
+    JPoint():X(0),Y(0),isValid(true){}   
 }JPoint;    
 
 //2023-09-24 18:03:32 - Polygon is made of multiple points
@@ -30,8 +30,7 @@ typedef struct JPolygon
 {
     vector<JPoint>points;
     bool isValid;
-    JPolygon():isValid(false),X(0),Y(0)
-
+    JPolygon():isValid(false){}
 }JPolygon;
 
 typedef struct JSector
@@ -124,7 +123,7 @@ string JSON_Types(int type) {
 //2023-09-24 17:18:54 - PArse some json element
 string jsonReadString( cJSON * obj , string key, bool & success)
 {
-    string typedRes= -1;
+    string typedRes= "";
     success = false;
     cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
     if(res)
@@ -154,6 +153,23 @@ double jsonReadDouble( cJSON * obj , string key, bool & success)
     return typedRes;
 }//JsonReadDouble
 
+//2023-10-14 09:42:00 - Just read value
+double jsonReadDoubleValue( cJSON * obj , bool & success)
+{
+    double typedRes= -1;
+    success = false;
+//    cJSON * res = cJSON_GetObjectItem(obj,key.c_str()); 
+    cJSON *res = obj;   
+    if(res)
+    {
+        if (cJSON_IsNumber(res)) {
+          typedRes = res->valuedouble;
+          success = true;      
+        }        
+    }
+    return typedRes;
+}//JsonReadDouble
+
 
 
 //2023-09-24 17:18:54 - PArse some json element
@@ -171,13 +187,14 @@ bool jsonReadBoolean(cJSON * obj ,string key, bool & success)
             return false;
         }
     }
+    return false;
 }//jsonReadBoolean
 
 
 
 
 //2023-09-24 17:18:54 - PArse some json element jsonReadPoint
-JPolygon jsonReadPoint( cJSON * obj , string key, bool & success)
+JPoint jsonReadPoint( cJSON * obj , string key, bool & success)
 {
  
     //                         [
@@ -189,14 +206,13 @@ JPolygon jsonReadPoint( cJSON * obj , string key, bool & success)
     cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
     if(res)
     {
-        double X, Y;
+        double X=-1, Y=-1;
         short c=0;
         cJSON_ArrayForEach(res, obj) 
         {
-            succeeded=true;
-            double d = jsonReadDouble(res,succeeded);
-            if (cJSON_IsNumber(res)) {
-                
+            success=true;
+            double d = jsonReadDoubleValue(res,success);
+            if (success) {                
                 if(c==0)
                 {
                     X = d;
@@ -245,9 +261,9 @@ JPolygon jsonReadPolygon( cJSON * obj , string key, bool & success)
     {
         cJSON_ArrayForEach(res, obj) 
         {
-            succeeded=true;
-            JPoint point = jsonReadPoint(res,succeeded);
-            //if(succeeded)
+            success=true;
+            JPoint point = jsonReadPoint(res,key,success);
+            //if(success)
             {
                 polygon.points.push_back(point);
             }
@@ -258,7 +274,7 @@ JPolygon jsonReadPolygon( cJSON * obj , string key, bool & success)
 
 
 //2023-09-24 17:18:54 - PArse some json element
-Sector jsonReadSector(cJSON * obj, bool & success)
+JSector jsonReadSector(cJSON * obj, bool & success)
 {  
     // {
     //                     "name": "north",
@@ -281,17 +297,17 @@ Sector jsonReadSector(cJSON * obj, bool & success)
     //                         ]
     //                     ]
     //                 }
-    Sector sector;
+    JSector sector;
     success = false;
  
     if (cJSON_IsObject(obj)) {
         //ESP_LOGI(TAG, "Object");
         bool succeeded = false;
         sector.name = jsonReadString(obj, "name",succeeded);        
-             ESP_LOGI(TAG, "sector name is %s", sector.name);
+             ESP_LOGI(TAG, "sector name is %s", sector.name.c_str());
 
-        sector.polygon = jsonReadPolygon(obj,"polygon");
-        success=true;
+        sector.polygon = jsonReadPolygon(obj,"polygon",succeeded);
+        success = succeeded;        
     } 
     
     return sector;    
@@ -321,10 +337,10 @@ void * convertJsonObject(cJSON * obj , string code_name)
         JTone * tone = new JTone();
 
         d = jsonReadDouble(obj, "freq",succeeded);        
-        if(succeeded) { tone.freq = d; } else tone.isValid = false; 
+        if(succeeded) { tone->freq = d; } else tone->isValid = false; 
 
         b = jsonReadBoolean(obj, "enable",succeeded);        
-        if(succeeded) { tone.enable = b; } else tone.isValid = false; 
+        if(succeeded) { tone->enable = b; } else tone->isValid = false; 
     
         out = (void*) tone;
     }//endif "TONE"
@@ -333,18 +349,23 @@ void * convertJsonObject(cJSON * obj , string code_name)
     {
         //Single Double   
          d = jsonReadDouble(obj, "freq",succeeded);        
-        if(succeeded) { alt_prec = d; }
+        if(succeeded) 
+        { 
+             out = (void *) &d; //Return alt_prec            
+        }        
     }
     
     if(code_name=="sectors")
     {
         ESP_LOGI(TAG, "--SECTORS--");
         //containing an array of sectors
+        vector<JSector> *sectors = new vector<JSector>();
         cJSON_ArrayForEach(current_element, obj) 
         {
-            Sector sector = jsonReadSector(current_element,succeeded);
-            sectors.push_back(sector);
+            JSector sector = jsonReadSector(current_element,succeeded);
+            sectors->push_back(sector);
         }//loop array
+        out = (void *) sectors;
     }
     
     if(code_name=="polygon")
@@ -352,10 +373,7 @@ void * convertJsonObject(cJSON * obj , string code_name)
         //Tableau de double
     }
     
-    if(code_name=="alt_prec")
-    {
-        
-    }
+   
     return out;
 }//parseObject
 
