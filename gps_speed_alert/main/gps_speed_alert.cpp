@@ -16,6 +16,12 @@
 static const char *TAG = "ESPeedApp";
 
 
+//****** Usefull Infos ***************
+//sudo chmod -R 777 /dev/ttyUSB0
+//idf.py -p /dev/ttyUSB0 flash  
+// ***********************
+
+
 //------------------------------ nvs in esp_tools ---------------
 #include "esp_tools.h" // nvs + led strip 
 //------------------------------ nvs in esp_tools ------------------

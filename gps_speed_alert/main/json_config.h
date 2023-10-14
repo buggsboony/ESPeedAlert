@@ -14,6 +14,20 @@ typedef struct JTone
     int freq;
     bool enable;
     bool isValid;
+
+    string toString()
+    {
+    	// string str = "JTone #name=[";
+        // str.append(name+"]");
+        // str.append(" freq=[");
+        // str.append(doubleToStr(freq));
+        
+        std::ostringstream oss;
+        oss<<"JTone name=["<<name<<"] "<<"freq=["<<freq<<"]"
+        <<" enable="<<enable<<" isValid="<<this->isValid<<endl;
+        
+        return oss.str();
+    }
     JTone():name("JTone untitled"),freq(555),enable(true),isValid(true){}        
 }JTone;
 
@@ -158,14 +172,14 @@ double jsonReadDoubleValue( cJSON * obj , bool & success)
 {
     double typedRes= -1;
     success = false;
-//    cJSON * res = cJSON_GetObjectItem(obj,key.c_str()); 
-    cJSON *res = obj;   
-    if(res)
+
+    if (cJSON_IsNumber(obj)) {
+        //int typedRes = json_item->valueint;
+        typedRes = obj->valuedouble;        
+        success = true;
+    } else 
     {
-        if (cJSON_IsNumber(res)) {
-          typedRes = res->valuedouble;
-          success = true;      
-        }        
+        cout<<"IS NOT a Number"<<endl;
     }
     return typedRes;
 }//JsonReadDouble
@@ -348,7 +362,7 @@ void * convertJsonObject(cJSON * obj , string code_name)
     if(code_name=="alt_prec")
     {
         //Single Double   
-         d = jsonReadDouble(obj, "freq",succeeded);        
+         d = jsonReadDouble(obj, code_name ,succeeded);        
         if(succeeded) 
         { 
              out = (void *) &d; //Return alt_prec            
@@ -377,113 +391,66 @@ void * convertJsonObject(cJSON * obj , string code_name)
     return out;
 }//parseObject
 
-
+    JConfig config;
 
     //2023-08-31 17:43:18 read JSON Config function
     void readJsonConfig()
     {
-            string json = nvs_read_string(nvsHandle,"JSON_CONFIG");
-    
-        string json_test2 = R"(
-                        {
-                "enter_tone": {
-                    "freq": 700,
-                    "enable": true
-                },
-                "exit_tone": {
-                    "freq": 500,
-                    "enable": true
-                },
-                "alt_prec": 4,
-                "sectors": [
-                    {
-                        "name": "north",
-                        "polygon": [
-                            [
-                                4.6323036,
-                                -1.00874
-                            ],
-                            [
-                                4.63306036,
-                                -1.008
-                            ],
-                            [
-                                4.63339823,
-                                -1
-                            ],
-                            [
-                                4.6351853,
-                                -1.0091
-                            ]
-                        ]
-                    },
-                    {
-                        "name": "south",
-                        "polygon": [
-                            [
-                                4.323036,
-                                -1.0874
-                            ],
-                            [
-                                4.3306036,
-                                -1.08
-                            ],
-                            [
-                                4.3339823,
-                                -1
-                            ],
-                            [
-                                4.351853,
-                                -1.091
-                            ]
-                        ]
-                    }
-                ],
-                "areas": [
-                    {
-                        "sector": "north",
-                        "name": "Road 1",
-                        "polygon": [
-                            [
-                                4.6323036,
-                                -1.00874,
-                                32
-                            ],
-                            [
-                                4.63306036,
-                                -1.008
-                            ],
-                            [
-                                4.63339823,
-                                -1
-                            ],
-                            [
-                                4.6351853,
-                                -1.0091
-                            ],
-                            null
-                        ],
-                        "exit_tone": {
-                            "enable": false
-                        }
-                    }
-                ]
-            }
-                        
-        )";
-
+            string json = nvs_read_string(nvsHandle,"JSON_CONFIG");   
             //ESP_LOGI(TAG, "my_json_string\n%s",json.c_str() );	
             ESP_LOGI(TAG, "Deserialize.....");
             cJSON *root = cJSON_Parse(json.c_str());
             ESP_LOGI(TAG, "root->type=%s", JSON_Types(root->type).c_str() );
 
             //Récupérer le enter_tone et exit_tone          
-            cJSON *json_tone = cJSON_GetObjectItem(root,"enter_tone"); 
-            void * aJtone = convertJsonObject(json_tone,"TONE");
-            JTone * enter_tone = (JTone *) aJtone;
+            cJSON* json_item; bool succeeded=false; double d=-1;
+            
+            json_item = cJSON_GetObjectItem(root,"enter_tone"); 
+            if(json_item != NULL)
+            {
+                void * aJtone = convertJsonObject(json_item,"TONE");
+                if(aJtone != NULL)
+                {
+                    config.enter_tone = *( (JTone*) aJtone );
+                   // ESP_LOGI(TAG, "debug enter_tone: %s",config.enter_tone.toString().c_str() );
+                }
+            }//endif json_item
+         
+            json_item = cJSON_GetObjectItem(root,"exit_tone"); 
+            if(json_item != NULL)
+            {
+                void * aJtone = convertJsonObject(json_item,"TONE");
+                if(aJtone != NULL)
+                {
+                  config.enter_tone = *( (JTone*) aJtone );
+                 // ESP_LOGI(TAG, "debug exit_tone: %s",config.enter_tone.toString().c_str() );
+                }
+            }//endif json_item
+            //----------------------
 
-            ESP_LOGI(TAG, "Freq jtone freq=%d",enter_tone->freq);
+            json_item = cJSON_GetObjectItem(root,"alt_prec"); 
+            if(json_item != NULL)
+            {
+                d = jsonReadDoubleValue(json_item,succeeded);
+                if(succeeded)
+                {
+                    config.alt_prec = d;
+                    ESP_LOGI(TAG, "debug alt_prec: %2.2f",config.alt_prec );
+                }
+            }
+            //-----------------------------
 
+            //sectors
+            json_item = cJSON_GetObjectItem(root,"sectors");
+            if(json_item != NULL)
+            {
+                void * sectors = convertJsonObject(json_item,"sectors");
+                config.sectors = *( (vector<JSector>*) sectors );
+
+                cout<<"Sectors count = "<<config.sectors.size()<<endl;
+
+            }//sectors
+            
 
             // double lat = cJSON_GetObjectItem(root,"lat")->valuedouble;
             // double lng = cJSON_GetObjectItem(root,"lng")->valuedouble;
