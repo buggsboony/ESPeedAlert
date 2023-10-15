@@ -147,7 +147,7 @@ void JSON_Analyze(const cJSON * const root) {
 			ESP_LOGI(TAG, "Raw(Not support)");
 		}
 	}
-}
+}//jsonAnalyse
 
 
 void app_main_json()

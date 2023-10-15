@@ -37,6 +37,13 @@ typedef struct JPoint
     double X,Y;
     bool isValid;
     JPoint():X(0),Y(0),isValid(true){}   
+
+    string toString()
+    {    	
+        std::ostringstream oss;
+        oss<<"JPoint("<<X<<","<<Y<<")->isValid="<<this->isValid<<endl;        
+        return oss.str();
+    }//toString()
 }JPoint;    
 
 //2023-09-24 18:03:32 - Polygon is made of multiple points
@@ -45,12 +52,31 @@ typedef struct JPolygon
     vector<JPoint>points;
     bool isValid;
     JPolygon():isValid(false){}
+
+    string toString()
+    {    	
+        std::ostringstream oss;
+        short n=0;
+        oss<<"Polygon: "<<endl;
+        for(JPoint point: points)
+        {
+            oss<<++n<<":"<<point.toString();        
+        }//next point in polygon
+        return oss.str();
+    }//toString()
 }JPolygon;
 
 typedef struct JSector
 {
     string name; //Sector name
     JPolygon polygon;
+    
+    string toString()
+    {    	
+        std::ostringstream oss;        
+        oss<<"Sector: name=["<<name<<"], s.poly="<<polygon.toString()<<endl;       
+        return oss.str();
+    }//toString()
 }JSector;
 
 
@@ -61,6 +87,14 @@ typedef struct JArea
     JSector sector;
     JPolygon polygon;
     JTone enter_tone,exit_tone; //Overload tones behaviours.
+
+    string toString()
+    {    	
+        std::ostringstream oss;    
+        oss<<"Area: name=["<<name<<"] "<<"a.Sector:"<<sector.toString()<<" a.poly:"<<polygon.toString()
+        <<"enter_tone:"<<enter_tone.toString()<<"exit_tone:"<<exit_tone.toString()<<endl;       
+        return oss.str();
+    }//toString()
 }JArea;
 
 
@@ -167,19 +201,62 @@ double jsonReadDouble( cJSON * obj , string key, bool & success)
     return typedRes;
 }//JsonReadDouble
 
+
+
+void JSON_Analyze(const cJSON * const root) {
+	//ESP_LOGI(TAG, "root->type=%s", JSON_Types(root->type));
+	cJSON *current_element = NULL;
+	//ESP_LOGI(TAG, "roo->child=%p", root->child);
+	//ESP_LOGI(TAG, "roo->next =%p", root->next);
+	cJSON_ArrayForEach(current_element, root) {
+		//ESP_LOGI(TAG, "type=%s", JSON_Types(current_element->type));
+		//ESP_LOGI(TAG, "current_element->string=%p", current_element->string);
+		if (current_element->string) {
+			const char* string = current_element->string;
+			ESP_LOGI(TAG, "[%s]", string);
+		}
+		if (cJSON_IsInvalid(current_element)) {
+			ESP_LOGI(TAG, "Invalid");
+		} else if (cJSON_IsFalse(current_element)) {
+			ESP_LOGI(TAG, "False");
+		} else if (cJSON_IsTrue(current_element)) {
+			ESP_LOGI(TAG, "True");
+		} else if (cJSON_IsNull(current_element)) {
+			ESP_LOGI(TAG, "Null");
+		} else if (cJSON_IsNumber(current_element)) {
+			int valueint = current_element->valueint;
+			double valuedouble = current_element->valuedouble;
+			ESP_LOGI(TAG, "int=%d double=%f", valueint, valuedouble);
+		} else if (cJSON_IsString(current_element)) {
+			const char* valuestring = current_element->valuestring;
+			ESP_LOGI(TAG, "%s", valuestring);
+		} else if (cJSON_IsArray(current_element)) {
+			//ESP_LOGI(TAG, "Array");
+			JSON_Analyze(current_element);
+		} else if (cJSON_IsObject(current_element)) {
+			//ESP_LOGI(TAG, "Object");
+			JSON_Analyze(current_element);
+		} else if (cJSON_IsRaw(current_element)) {
+			ESP_LOGI(TAG, "Raw(Not support)");
+		}
+	}
+}//analkyz
+
+
 //2023-10-14 09:42:00 - Just read value
-double jsonReadDoubleValue( cJSON * obj , bool & success)
+double jsonReadDoubleValue( cJSON * current_element , bool & success)
 {
     double typedRes= -1;
     success = false;
 
-    if (cJSON_IsNumber(obj)) {
+    if (cJSON_IsNumber(current_element)) {
         //int typedRes = json_item->valueint;
-        typedRes = obj->valuedouble;        
+        typedRes = current_element->valuedouble;        
         success = true;
     } else 
-    {
+    {        
         cout<<"IS NOT a Number"<<endl;
+        JSON_Analyze(current_element);
     }
     return typedRes;
 }//JsonReadDouble
@@ -217,15 +294,18 @@ JPoint jsonReadPoint( cJSON * obj , string key, bool & success)
     //                         ] 
     success = false;
     JPoint jpoint;
-    cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
-    if(res)
+    // cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
+    // if(res)
     {
+        
+        short c=0; 
         double X=-1, Y=-1;
-        short c=0;
-        cJSON_ArrayForEach(res, obj) 
+        cJSON *current_element = NULL;
+        cJSON_ArrayForEach(current_element, obj) 
         {
+         
             success=true;
-            double d = jsonReadDoubleValue(res,success);
+            double d = jsonReadDoubleValue(current_element,success);
             if (success) {                
                 if(c==0)
                 {
@@ -271,16 +351,34 @@ JPolygon jsonReadPolygon( cJSON * obj , string key, bool & success)
     success = false;
     JPolygon polygon;
     cJSON * res = cJSON_GetObjectItem(obj,key.c_str());    
+    cout<<"Reading polygon !"<<endl;
     if(res)
     {
         cJSON_ArrayForEach(res, obj) 
         {
-            success=true;
-            JPoint point = jsonReadPoint(res,key,success);
-            //if(success)
-            {
-                polygon.points.push_back(point);
-            }
+            cJSON * current_element;
+            cJSON_ArrayForEach(current_element, res)
+            {           
+                if (cJSON_IsNumber(current_element)) 
+                {
+                    int valueint = current_element->valueint;
+                    double valuedouble = current_element->valuedouble;
+                    ESP_LOGI(TAG, "---------->int=%d double=%f", valueint, valuedouble);
+                }else
+                {
+                    cout<<"Analyzin!!!!!!!"<<endl;
+            
+                    success=false;
+                    //JSON_Analyze(current_element);
+                       // JPoint point = jsonReadPoint(res,key,success);
+                    // cout<<"next point in array "<<point.toString()<<endl;
+                    // //if(success)
+                    // {
+                    //     polygon.points.push_back(point);
+                    // }
+                    }
+            }//next paire
+         
         }//loop array   
     }
     return polygon;
@@ -290,6 +388,7 @@ JPolygon jsonReadPolygon( cJSON * obj , string key, bool & success)
 //2023-09-24 17:18:54 - PArse some json element
 JSector jsonReadSector(cJSON * obj, bool & success)
 {  
+    cout<<"Reading Sector !"<<endl;
     // {
     //                     "name": "north",
     //                     "polygon": [
@@ -376,7 +475,7 @@ void * convertJsonObject(cJSON * obj , string code_name)
         vector<JSector> *sectors = new vector<JSector>();
         cJSON_ArrayForEach(current_element, obj) 
         {
-            JSector sector = jsonReadSector(current_element,succeeded);
+            JSector sector = jsonReadSector(current_element,succeeded);            
             sectors->push_back(sector);
         }//loop array
         out = (void *) sectors;
@@ -447,7 +546,8 @@ void * convertJsonObject(cJSON * obj , string code_name)
                 void * sectors = convertJsonObject(json_item,"sectors");
                 config.sectors = *( (vector<JSector>*) sectors );
 
-                cout<<"Sectors count = "<<config.sectors.size()<<endl;
+                //cout<<"Sectors count = "<<config.sectors.size()<<endl;
+                cout<<"Sectors[0] = "<<config.sectors[0].toString()<<endl;
 
             }//sectors
             
