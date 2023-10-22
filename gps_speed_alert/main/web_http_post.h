@@ -1,52 +1,42 @@
 //2023-08-16 11:34:39 - WIFI WEB + HTTP POST
-/*C++ example, http_post HTML form to ESP32-C3 HTTP WebServer over Wifi
-serverIP 192.168.4.1
-URI GET : 192.168.4.1/config
-URI POST : 192.168.4.1/config
-
-sdkconfig file might need to change 512 values to 1024 to avoid errors
-HTTPD_MAX_REQ_HDR_LEN 1024 //2023-08-05 18:12:22 - Bug error is :  Header fields are too long !!
-CONFIG_HTTPD_MAX_URI_LEN 1024 //2023-08-05 18:35:24 - Error Uri to long !!
-
-Don't use #include <iostream>  # It gives error Failed.. partition table ...
-*/
-
-/*  WiFi softAP Example
-  This example code is in the Public Domain (or CC0 licensed, at your option.)
-  Unless required by applicable law or agreed to in writing, this
-  software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-  CONDITIONS OF ANY KIND, either express or implied.
-*/
-
-
-//// -------------------------------------  Usage  ----------------------------------------------------------------------
-// extern "C" void app_main(void)
-// {
-
-//    static httpd_handle_t server = NULL;
-
-//    //Initialize NVS
-//    esp_err_t ret = nvs_flash_init();
-//    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-//      ESP_ERROR_CHECK(nvs_flash_erase());
-//      ret = nvs_flash_init();
-//    }
-//    ESP_ERROR_CHECK(ret);
-
-
-//    ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
-//    wifi_init_softap();
-
-
-//    ESP_ERROR_CHECK(esp_netif_init());
-
-
-//    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
-// //    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
-// }
-
-
-
+        // C++ example, http_post HTML form to ESP32-C3 HTTP WebServer over Wifi
+        // serverIP 192.168.4.1
+        // URI GET : 192.168.4.1/config
+        // URI POST : 192.168.4.1/config
+        //
+        // sdkconfig file might need to change 512 values to 1024 to avoid errors
+        // HTTPD_MAX_REQ_HDR_LEN 1024 //2023-08-05 18:12:22 - Bug error is :  Header fields are too long !!
+        // CONFIG_HTTPD_MAX_URI_LEN 1024 //2023-08-05 18:35:24 - Error Uri to long !!
+        //
+        // Don't use #include <iostream>  # It gives error Failed.. partition table ...
+        //
+        //
+        //   WiFi softAP Example
+        // This example code is in the Public Domain (or CC0 licensed, at your option.)
+        // Unless required by applicable law or agreed to in writing, this
+        // software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+        // CONDITIONS OF ANY KIND, either express or implied.
+        //
+        //
+        //
+        //// -------------------------------------  Usage  ----------------------------------------------------------------------
+        // extern "C" void app_main(void)
+        // {        
+        //    static httpd_handle_t server = NULL;
+        //    //Initialize NVS
+        //    esp_err_t ret = nvs_flash_init();
+        //    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        //      ESP_ERROR_CHECK(nvs_flash_erase());
+        //      ret = nvs_flash_init();
+        //    }
+        //    ESP_ERROR_CHECK(ret);
+        //    ESP_LOGI(TAG, "ESP_WIFI_MODE_AP");
+        //    wifi_init_softap();
+        //    ESP_ERROR_CHECK(esp_netif_init());
+        //    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &connect_handler, &server));
+        // //    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &disconnect_handler, &server));
+        // }
+//End
 
 
 
